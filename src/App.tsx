@@ -4,8 +4,7 @@ import { TopBar } from './components/layout/TopBar';
 import { Sidebar } from './components/layout/Sidebar';
 import { LoginView } from './views/LoginView';
 import { DashboardView } from './views/DashboardView';
-import { ComunicadosListView } from './views/ComunicadosListView';
-import { CrearComunicadoView } from './views/CrearComunicadoView';
+import { ComunicadosView } from './views/ComunicadosView';
 import { DetalleComunicadoView } from './views/DetalleComunicadoView';
 import { SeguimientoLecturaView } from './views/SeguimientoLecturaView';
 import { SucursalesView } from './views/SucursalesView';
@@ -28,9 +27,8 @@ const MainLayout: React.FC = () => {
       case 'dashboard':
         return <DashboardView />;
       case 'comunicados':
-        return <ComunicadosListView />;
       case 'crear-comunicado':
-        return <CrearComunicadoView />;
+        return <ComunicadosView />;
       case 'detalle-comunicado':
         return <DetalleComunicadoView />;
       case 'seguimiento':

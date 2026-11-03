@@ -18,7 +18,15 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 
-export const ComunicadosListView: React.FC = () => {
+interface ComunicadosListViewProps {
+  onNavigateToCreate?: () => void;
+  hideHeader?: boolean;
+}
+
+export const ComunicadosListView: React.FC<ComunicadosListViewProps> = ({
+  onNavigateToCreate,
+  hideHeader = false,
+}) => {
   const {
     comunicados,
     activeRole,
@@ -90,26 +98,34 @@ export const ComunicadosListView: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-base font-bold text-[#202124] uppercase tracking-wider">
-            Gestión de Comunicados Oficiales
-          </h1>
-          <p className="text-xs text-[#64748B]">
-            Registro, control de distribución institucional y ciclo de vida de publicaciones
-          </p>
-        </div>
+      {!hideHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-base font-bold text-[#202124] uppercase tracking-wider">
+              Gestión de Comunicados Oficiales
+            </h1>
+            <p className="text-xs text-[#64748B]">
+              Registro, control de distribución institucional y ciclo de vida de publicaciones
+            </p>
+          </div>
 
-        {canCreate && (
-          <button
-            onClick={() => setCurrentView('crear-comunicado')}
-            className="px-4 py-2 rounded-sm bg-[#A6192E] hover:bg-[#871326] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 self-start sm:self-auto"
-          >
-            <PlusCircle size={15} />
-            <span>Nuevo Comunicado</span>
-          </button>
-        )}
-      </div>
+          {canCreate && (
+            <button
+              onClick={() => {
+                if (onNavigateToCreate) {
+                  onNavigateToCreate();
+                } else {
+                  setCurrentView('crear-comunicado');
+                }
+              }}
+              className="px-4 py-2 rounded-sm bg-[#A6192E] hover:bg-[#871326] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 self-start sm:self-auto"
+            >
+              <PlusCircle size={15} />
+              <span>Nuevo Comunicado</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Enterprise Data Table Container (Blueprint 2) */}
       <div className="bg-white rounded-sm border border-[#E4E2E1] shadow-2xs overflow-hidden">
@@ -213,7 +229,14 @@ export const ComunicadosListView: React.FC = () => {
                             </div>
                           )}
                           <div className="flex flex-col max-w-xs truncate">
-                            <span className="text-[10px] font-mono text-[#64748B]">{c.codigo}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono text-[#64748B]">{c.codigo}</span>
+                              {c.tipoFormato === 'rapido' && (
+                                <span className="inline-flex items-center text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded-xs border border-amber-200">
+                                  ⚡ Rápido
+                                </span>
+                              )}
+                            </div>
                             <span
                               onClick={() => setCurrentView('detalle-comunicado', c.id)}
                               className="font-bold text-[#202124] truncate hover:text-[#A6192E] cursor-pointer"
@@ -309,7 +332,14 @@ export const ComunicadosListView: React.FC = () => {
               className="p-3.5 rounded-sm border border-[#E4E2E1] bg-white space-y-2 shadow-2xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-[#64748B]">{c.codigo}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono text-[#64748B]">{c.codigo}</span>
+                  {c.tipoFormato === 'rapido' && (
+                    <span className="inline-flex items-center text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded-xs border border-amber-200">
+                      ⚡ Rápido
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-1.5">
                   {getPriorityBadge(c.prioridad)}
                   {getStatusBadge(c.estado)}

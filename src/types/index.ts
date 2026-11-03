@@ -75,6 +75,7 @@ export interface Departamento {
 export type PrioridadComunicado = 'normal' | 'importante' | 'urgente';
 export type EstadoComunicado = 'borrador' | 'programado' | 'publicado' | 'anulado';
 export type AlcanceTipo = 'toda_empresa' | 'sucursal' | 'departamento' | 'individual' | 'encargados_area';
+export type TipoFormatoComunicado = 'rapido' | 'completo';
 
 export interface ImagenAdjunta {
   id: string;
@@ -132,6 +133,7 @@ export interface Comunicado {
   totalVisualizados: number;
   totalConfirmados: number;
   confirmaciones: ConfirmacionUsuario[];
+  tipoFormato?: TipoFormatoComunicado;
 }
 
 export interface EventoAuditoria {

@@ -88,6 +88,11 @@ export const DetalleComunicadoView: React.FC = () => {
           <span className="text-[10px] font-mono bg-[#F6F3F2] border border-[#E4E2E1] px-2 py-0.5 rounded-sm text-[#64748B]">
             {comunicado.codigo}
           </span>
+          {comunicado.tipoFormato === 'rapido' && (
+            <span className="px-2 py-0.5 rounded-sm text-tiny font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+              ⚡ Comunicado Rápido
+            </span>
+          )}
           <span className="px-2 py-0.5 rounded-sm text-tiny font-bold uppercase bg-emerald-100 text-[#16A34A] border border-emerald-200">
             {comunicado.estado}
           </span>

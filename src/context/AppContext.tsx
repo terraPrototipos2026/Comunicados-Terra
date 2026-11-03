@@ -37,7 +37,9 @@ interface AppContextType {
   notificaciones: NotificacionSistema[];
   
   // Navigation & Role Simulation
-  setCurrentView: (view: string, comunicadoId?: string) => void;
+  setCurrentView: (view: string, comunicadoId?: string, tab?: 'list' | 'create') => void;
+  comunicadosTab: 'list' | 'create';
+  setComunicadosTab: (tab: 'list' | 'create') => void;
   setActiveRole: (role: RoleKey) => void;
   setFiltroSucursalId: (id: string | 'all') => void;
   login: (email: string) => void;
@@ -77,6 +79,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [activeRole, setActiveRoleState] = useState<RoleKey>('admin_ceo');
   const [currentView, setCurrentViewState] = useState<string>('dashboard');
+  const [comunicadosTab, setComunicadosTab] = useState<'list' | 'create'>('list');
   const [selectedComunicadoId, setSelectedComunicadoId] = useState<string | null>('com-001');
   const [filtroSucursalId, setFiltroSucursalId] = useState<string | 'all'>('all');
 
@@ -188,17 +191,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setActiveRole = (role: RoleKey) => {
     setActiveRoleState(role);
-    // If worker switches, make sure worker sees their dashboard or communications
-    if (role === 'trabajador' && (currentView === 'roles' || currentView === 'auditoria' || currentView === 'crear-comunicado')) {
-      setCurrentViewState('comunicados');
+    // If worker switches, make sure worker sees their dashboard or communications and tab is list
+    if (role === 'trabajador') {
+      setComunicadosTab('list');
+      if (currentView === 'roles' || currentView === 'auditoria' || currentView === 'crear-comunicado') {
+        setCurrentViewState('comunicados');
+      }
     }
   };
 
-  const setCurrentView = (view: string, comunicadoId?: string) => {
+  const setCurrentView = (view: string, comunicadoId?: string, tab?: 'list' | 'create') => {
     if (comunicadoId) {
       setSelectedComunicadoId(comunicadoId);
     }
-    setCurrentViewState(view);
+    if (view === 'crear-comunicado') {
+      setCurrentViewState('comunicados');
+      setComunicadosTab('create');
+    } else {
+      if (view === 'comunicados' && tab) {
+        setComunicadosTab(tab);
+      }
+      setCurrentViewState(view);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -486,6 +500,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentUser,
         activeRole,
         currentView,
+        comunicadosTab,
+        setComunicadosTab,
         selectedComunicadoId,
         filtroSucursalId,
         roles,

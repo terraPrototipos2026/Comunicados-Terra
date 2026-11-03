@@ -3,7 +3,6 @@ import { useApp } from '../../context/AppContext';
 import {
   LayoutDashboard,
   FileText,
-  PlusCircle,
   BarChart3,
   Building2,
   FolderTree,
@@ -48,12 +47,6 @@ export const Sidebar: React.FC = () => {
       rolesAllowed: ['admin_ceo', 'gerente_sucursal', 'encargado_depto', 'rrhh', 'trabajador'],
       badge: pendingUrgents > 0 ? `${pendingUrgents} urgentes` : undefined,
       badgeColor: 'bg-[#DC2626] text-white',
-    },
-    {
-      id: 'crear-comunicado',
-      label: 'Crear Comunicado',
-      icon: PlusCircle,
-      rolesAllowed: ['admin_ceo', 'gerente_sucursal', 'encargado_depto', 'rrhh'],
     },
     {
       id: 'seguimiento',

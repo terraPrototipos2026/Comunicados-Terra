@@ -6,10 +6,12 @@ import {
   ImagenAdjunta,
   PdfAdjunto,
   Comunicado,
-  RoleKey
+  RoleKey,
+  TipoFormatoComunicado
 } from '../types';
 import {
   FileText,
+  Zap,
   AlertOctagon,
   AlertTriangle,
   Info,
@@ -43,7 +45,15 @@ import {
   UserCog
 } from 'lucide-react';
 
-export const CrearComunicadoView: React.FC = () => {
+interface CrearComunicadoViewProps {
+  onCancel?: () => void;
+  onSuccess?: (createdId: string) => void;
+}
+
+export const CrearComunicadoView: React.FC<CrearComunicadoViewProps> = ({
+  onCancel,
+  onSuccess
+}) => {
   const {
     sucursales,
     departamentos,
@@ -68,6 +78,28 @@ export const CrearComunicadoView: React.FC = () => {
     return usuarios.filter(u => u.rolKey === 'encargado_depto');
   }, [usuarios]);
 
+  // Modalidad de redacción: rápido vs completo
+  const [modoCreacion, setModoCreacion] = useState<TipoFormatoComunicado>('rapido');
+
+  // Estado específico para Comunicado Rápido
+  const [tituloRapido, setTituloRapido] = useState('');
+  const [imagenRapida, setImagenRapida] = useState<ImagenAdjunta | null>({
+    id: 'img-afiche-demo',
+    url: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&auto=format&fit=crop&q=80',
+    nombre: 'Afiche_Oficial_Grupo_Terra.jpg',
+    tamano: '2.1 MB',
+    esPrincipal: true,
+    orden: 1
+  });
+  const [pdfRapido, setPdfRapido] = useState<PdfAdjunto | null>({
+    id: 'pdf-circular-demo',
+    nombre: 'Circular_Oficial_Distribucion_General.pdf',
+    tamano: '1.8 MB',
+    url: '#',
+    paginas: 3
+  });
+  const [prioridadRapida, setPrioridadRapida] = useState<PrioridadComunicado>('urgente');
+
   // Default initial scope based on role
   const initialAlcance: AlcanceTipo = isCEO 
     ? 'toda_empresa' 
@@ -81,7 +113,7 @@ export const CrearComunicadoView: React.FC = () => {
   const [cuerpoHtml, setCuerpoHtml] = useState(
     `<p>Por medio del presente comunicado oficial se informa a los colaboradores lo siguiente:</p>\n<p>Favor revisar los anexos adjuntos y confirmar la recepción de esta circular en la plataforma.</p>`
   );
-  const [prioridad, setPrioridad] = useState<PrioridadComunicado>('normal');
+  const [prioridad, setPrioridad] = useState<PrioridadComunicado>('urgente');
   const [alcanceTipo, setAlcanceTipo] = useState<AlcanceTipo>(initialAlcance);
   const [selectedSucursales, setSelectedSucursales] = useState<string[]>(
     isGerente ? [userSucursal.id] : ['suc-1', 'suc-2', 'suc-3']
@@ -248,6 +280,63 @@ export const CrearComunicadoView: React.FC = () => {
     setPdfs(prev => prev.filter(p => p.id !== id));
   };
 
+  const handleUploadImagenRapida = () => {
+    const sampleImages = [
+      'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=1200&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80'
+    ];
+    const randomUrl = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+    setImagenRapida({
+      id: `img-rapida-${Date.now()}`,
+      url: randomUrl,
+      nombre: `Afiche_Oficial_${Date.now().toString().slice(-4)}.jpg`,
+      tamano: '2.3 MB',
+      esPrincipal: true,
+      orden: 1
+    });
+  };
+
+  const handleUploadPdfRapido = () => {
+    setPdfRapido({
+      id: `pdf-rapido-${Date.now()}`,
+      nombre: `Circular_Normativa_${Date.now().toString().slice(-4)}.pdf`,
+      tamano: '1.6 MB',
+      url: '#',
+      paginas: 4
+    });
+  };
+
+  const executePublishRapido = (status: 'publicado' | 'borrador' = 'publicado') => {
+    if (!tituloRapido.trim()) {
+      alert('Por favor ingrese el título del comunicado rápido.');
+      return;
+    }
+
+    const created = addComunicado({
+      titulo: tituloRapido.trim(),
+      extracto: 'Difusión oficial a toda la empresa con afiche informativo y documento PDF adjunto.',
+      cuerpoHtml: `<p>Estimado equipo de <strong>Grupo Terra</strong>,</p><p>Se distribuye la siguiente comunicación oficial dirigida a toda la dotación de la empresa. Favor revisar el afiche gráfico y la circular adjunta a continuación.</p>`,
+      prioridad: prioridadRapida,
+      estado: status,
+      alcanceTipo: 'toda_empresa',
+      targetSucursales: ['suc-1', 'suc-2', 'suc-3'],
+      targetDepartamentos: [],
+      targetUsuarios: [],
+      imagenes: imagenRapida ? [imagenRapida] : [],
+      pdfs: pdfRapido ? [pdfRapido] : [],
+      totalDestinatarios: 191,
+      tipoFormato: 'rapido'
+    });
+
+    if (onSuccess) {
+      onSuccess(created.id);
+    } else {
+      setCurrentView('detalle-comunicado', created.id);
+    }
+  };
+
   const executePublish = (status: 'publicado' | 'borrador' | 'programado') => {
     if (!titulo.trim()) {
       alert('Por favor ingrese el título del comunicado institucional.');
@@ -267,11 +356,16 @@ export const CrearComunicadoView: React.FC = () => {
       programadoEn: status === 'programado' ? scheduleDate : undefined,
       imagenes,
       pdfs,
-      totalDestinatarios: estimatedRecipients
+      totalDestinatarios: estimatedRecipients,
+      tipoFormato: 'completo'
     });
 
     setShowConfirmModal(false);
-    setCurrentView('detalle-comunicado', created.id);
+    if (onSuccess) {
+      onSuccess(created.id);
+    } else {
+      setCurrentView('detalle-comunicado', created.id);
+    }
   };
 
   if (isWorker) {
@@ -288,7 +382,13 @@ export const CrearComunicadoView: React.FC = () => {
         </p>
         <div className="pt-2">
           <button
-            onClick={() => setCurrentView('comunicados')}
+            onClick={() => {
+              if (onCancel) {
+                onCancel();
+              } else {
+                setCurrentView('comunicados');
+              }
+            }}
             className="px-4 py-2 rounded-sm bg-[#A6192E] hover:bg-[#871326] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
           >
             Ver Mis Comunicados Recibidos
@@ -312,15 +412,337 @@ export const CrearComunicadoView: React.FC = () => {
           </p>
         </div>
         <button
-          onClick={() => setCurrentView('comunicados')}
+          onClick={() => {
+            if (onCancel) {
+              onCancel();
+            } else {
+              setCurrentView('comunicados');
+            }
+          }}
           className="px-3 py-1.5 rounded-sm border border-[#E4E2E1] bg-white text-xs font-semibold text-[#64748B] hover:bg-[#F6F3F2] cursor-pointer"
         >
           Volver a Comunicados
         </button>
       </div>
 
-      {/* Main Form Body */}
-      <div className="space-y-6">
+      {/* Selector de Modalidad de Comunicado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setModoCreacion('rapido')}
+          className={`p-3.5 rounded-sm border text-left transition-all cursor-pointer flex items-start gap-3 ${
+            modoCreacion === 'rapido'
+              ? 'border-[#A6192E] bg-white ring-1 ring-[#A6192E] shadow-2xs'
+              : 'border-[#E4E2E1] bg-white hover:border-[#64748B]/40 hover:bg-[#FCF9F8]'
+          }`}
+        >
+          <div className={`p-2 rounded-sm shrink-0 ${
+            modoCreacion === 'rapido' ? 'bg-[#A6192E] text-white' : 'bg-[#FCF9F8] text-[#64748B] border border-[#E4E2E1]'
+          }`}>
+            <Zap size={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#202124]">
+                1. Comunicado Rápido (Express)
+              </span>
+              <span className="px-1.5 py-0.2 rounded-xs text-[10px] font-bold bg-amber-100 text-amber-800">
+                Ágil
+              </span>
+            </div>
+            <p className="text-[11px] text-[#64748B] mt-0.5 leading-snug">
+              Título + Imagen/Afiche + Circular PDF. Dirigido automáticamente a <strong>toda la empresa</strong>.
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setModoCreacion('completo')}
+          className={`p-3.5 rounded-sm border text-left transition-all cursor-pointer flex items-start gap-3 ${
+            modoCreacion === 'completo'
+              ? 'border-[#A6192E] bg-white ring-1 ring-[#A6192E] shadow-2xs'
+              : 'border-[#E4E2E1] bg-white hover:border-[#64748B]/40 hover:bg-[#FCF9F8]'
+          }`}
+        >
+          <div className={`p-2 rounded-sm shrink-0 ${
+            modoCreacion === 'completo' ? 'bg-[#A6192E] text-white' : 'bg-[#FCF9F8] text-[#64748B] border border-[#E4E2E1]'
+          }`}>
+            <FileText size={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#202124]">
+                2. Comunicado Completo (Avanzado)
+              </span>
+              <span className="px-1.5 py-0.2 rounded-xs text-[10px] font-bold bg-slate-100 text-slate-700">
+                Tal como está
+              </span>
+            </div>
+            <p className="text-[11px] text-[#64748B] mt-0.5 leading-snug">
+              Editor de texto enriquecido, segmentación por sucursales/departamentos y programación.
+            </p>
+          </div>
+        </button>
+      </div>
+
+      {/* FORMULARIO SEGÚN MODALIDAD */}
+      {modoCreacion === 'rapido' ? (
+        <div className="space-y-5">
+          {/* Tarjeta de Formulario Rápido */}
+          <div className="bg-white border border-[#E4E2E1] rounded-sm p-5 space-y-5 shadow-2xs">
+            {/* Header explicativo */}
+            <div className="flex items-center justify-between border-b border-[#E4E2E1] pb-3">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#202124] flex items-center gap-2">
+                  <Zap size={15} className="text-[#A6192E]" />
+                  <span>Emisión Rápida de Comunicado</span>
+                </h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
+                  Publicación simplificada en 1 paso para afiches institucionales y circulares directas.
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <CheckCircle2 size={12} />
+                Despacho masivo automático
+              </span>
+            </div>
+
+            {/* 1. TÍTULO */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#202124] flex items-center justify-between">
+                <span>Título del Comunicado <span className="text-[#A6192E]">*</span></span>
+                <span className="text-[10px] text-[#64748B] font-normal">Máx 120 caracteres</span>
+              </label>
+              <input
+                type="text"
+                value={tituloRapido}
+                onChange={(e) => setTituloRapido(e.target.value)}
+                placeholder="Ej: Afiche Oficial: Protocolo Preventivo de Fin de Año y Turnos Operativos"
+                className="w-full px-3 py-2 rounded-sm text-xs font-medium border border-[#E4E2E1] bg-[#FCF9F8] text-[#202124] placeholder:text-[#64748B] focus:outline-none focus:border-[#A6192E] focus:ring-1 focus:ring-[#A6192E]"
+                maxLength={120}
+              />
+            </div>
+
+            {/* GRID: IMAGEN + PDF */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 2. IMAGEN / AFICHE */}
+              <div className="border border-[#E4E2E1] rounded-sm p-4 bg-[#FCF9F8] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#202124] flex items-center gap-1.5">
+                    <ImageIcon size={14} className="text-[#A6192E]" />
+                    Afiche / Imagen del Comunicado
+                  </span>
+                  <span className="text-[10px] text-[#64748B]">JPG, PNG, WEBP</span>
+                </div>
+
+                {imagenRapida ? (
+                  <div className="relative border border-[#E4E2E1] rounded-sm overflow-hidden bg-white group">
+                    <img
+                      src={imagenRapida.url}
+                      alt={imagenRapida.nombre}
+                      className="w-full h-44 object-cover"
+                    />
+                    <div className="p-2 bg-white flex items-center justify-between border-t border-[#E4E2E1]">
+                      <div className="truncate text-[11px] font-semibold text-[#202124]">
+                        {imagenRapida.nombre}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setImagenRapida(null)}
+                        className="text-[#DC2626] hover:text-red-800 p-1 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                        <span>Quitar</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-44 border-2 border-dashed border-[#E4E2E1] rounded-sm flex flex-col items-center justify-center p-4 text-center bg-white">
+                    <ImageIcon size={32} className="text-[#64748B]/60 mb-2" />
+                    <p className="text-xs font-medium text-[#202124]">No se ha adjuntado imagen</p>
+                    <p className="text-[11px] text-[#64748B] mt-0.5 mb-3">Adjunte un afiche corporativo o fotografía de terreno</p>
+                    <button
+                      type="button"
+                      onClick={handleUploadImagenRapida}
+                      className="px-3 py-1.5 rounded-sm bg-[#A6192E] hover:bg-[#871326] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Upload size={13} />
+                      <span>Cargar Imagen</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. DOCUMENTO PDF ADJUNTO */}
+              <div className="border border-[#E4E2E1] rounded-sm p-4 bg-[#FCF9F8] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#202124] flex items-center gap-1.5">
+                    <FileText size={14} className="text-[#A6192E]" />
+                    Documento Oficial (PDF)
+                  </span>
+                  <span className="text-[10px] text-[#64748B]">Circular o Memo</span>
+                </div>
+
+                {pdfRapido ? (
+                  <div className="h-44 border border-[#E4E2E1] rounded-sm bg-white p-4 flex flex-col justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="p-3 rounded-sm bg-red-50 text-[#A6192E]">
+                        <FileCheck size={28} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-[#202124] truncate">
+                          {pdfRapido.nombre}
+                        </h4>
+                        <p className="text-[11px] text-[#64748B] mt-0.5">
+                          {pdfRapido.tamano} • {pdfRapido.paginas} páginas
+                        </p>
+                        <span className="inline-flex mt-2 px-1.5 py-0.5 rounded-xs text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                          PDF Listo para visualización
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-2 border-t border-[#E4E2E1]">
+                      <button
+                        type="button"
+                        onClick={() => setPdfRapido(null)}
+                        className="text-[#DC2626] hover:text-red-800 p-1 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                        <span>Remover PDF</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-44 border-2 border-dashed border-[#E4E2E1] rounded-sm flex flex-col items-center justify-center p-4 text-center bg-white">
+                    <FileText size={32} className="text-[#64748B]/60 mb-2" />
+                    <p className="text-xs font-medium text-[#202124]">No se ha adjuntado documento PDF</p>
+                    <p className="text-[11px] text-[#64748B] mt-0.5 mb-3">Adjunte la circular o instructivo oficial en formato PDF</p>
+                    <button
+                      type="button"
+                      onClick={handleUploadPdfRapido}
+                      className="px-3 py-1.5 rounded-sm bg-[#A6192E] hover:bg-[#871326] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Upload size={13} />
+                      <span>Cargar Archivo PDF</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 4. ALCANCE FIJO: A TODOS */}
+            <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-sm bg-emerald-600 text-white shrink-0">
+                  <Users size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-2">
+                    <span>Alcance Fijo: A Todos los Trabajadores (Empresa Completa)</span>
+                    <span className="px-1.5 py-0.2 rounded-xs text-[10px] bg-emerald-200 text-emerald-900 font-bold">100% Cobertura</span>
+                  </h4>
+                  <p className="text-[11px] text-emerald-800 mt-0.5">
+                    Este comunicado se distribuirá automáticamente a <strong>todos los colaboradores (191 trabajadores)</strong> de las 3 sucursales (Central, Norte y Sur) sin requerir segmentación manual.
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-base font-black text-emerald-900 block">191</span>
+                <span className="text-[10px] font-semibold text-emerald-700 uppercase">Destinatarios</span>
+              </div>
+            </div>
+
+            {/* 5. PRIORIDAD RÁPIDA */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#202124] block">
+                Nivel de Prioridad del Comunicado
+              </label>
+              <div className="grid grid-cols-3 gap-2 max-w-md">
+                <button
+                  type="button"
+                  onClick={() => setPrioridadRapida('normal')}
+                  className={`px-3 py-2 rounded-sm text-xs font-bold uppercase border transition-all cursor-pointer ${
+                    prioridadRapida === 'normal'
+                      ? 'bg-slate-700 text-white border-slate-700 shadow-2xs'
+                      : 'bg-white text-slate-700 border-[#E4E2E1] hover:bg-slate-50'
+                  }`}
+                >
+                  Normal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrioridadRapida('importante')}
+                  className={`px-3 py-2 rounded-sm text-xs font-bold uppercase border transition-all cursor-pointer ${
+                    prioridadRapida === 'importante'
+                      ? 'bg-[#F28C00] text-white border-[#F28C00] shadow-2xs'
+                      : 'bg-white text-[#F28C00] border-[#E4E2E1] hover:bg-amber-50'
+                  }`}
+                >
+                  Importante
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrioridadRapida('urgente')}
+                  className={`px-3 py-2 rounded-sm text-xs font-bold uppercase border transition-all cursor-pointer ${
+                    prioridadRapida === 'urgente'
+                      ? 'bg-[#DC2626] text-white border-[#DC2626] shadow-2xs'
+                      : 'bg-white text-[#DC2626] border-[#E4E2E1] hover:bg-red-50'
+                  }`}
+                >
+                  Urgente
+                </button>
+              </div>
+            </div>
+
+            {/* ACCIONES DE PIE DEL FORMULARIO RÁPIDO */}
+            <div className="pt-4 border-t border-[#E4E2E1] flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onCancel) onCancel();
+                    else setCurrentView('comunicados');
+                  }}
+                  className="px-4 py-2 rounded-sm border border-[#E4E2E1] bg-white text-xs font-semibold text-[#64748B] hover:bg-[#F6F3F2] cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewModal(true)}
+                  className="px-4 py-2 rounded-sm border border-[#E4E2E1] bg-white text-xs font-semibold text-[#202124] hover:bg-[#F6F3F2] flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye size={14} className="text-[#64748B]" />
+                  <span>Vista Previa</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => executePublishRapido('borrador')}
+                  className="px-4 py-2 rounded-sm border border-slate-300 text-xs font-semibold text-[#64748B] hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Save size={14} />
+                  <span>Guardar Borrador</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => executePublishRapido('publicado')}
+                  className="px-5 py-2 rounded-sm bg-[#A6192E] hover:bg-[#871326] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Send size={14} />
+                  <span>Publicar Inmediatamente a Todos</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Main Form Body (Modo Completo - Tal como está) */
+        <div className="space-y-6">
         {/* SECTION 1: INFORMACIÓN GENERAL */}
         <div className="bg-white border border-[#E4E2E1] rounded-sm p-5 space-y-4 shadow-2xs">
           <div className="border-b border-[#E4E2E1] pb-2 flex items-center justify-between">
@@ -1311,6 +1733,7 @@ export const CrearComunicadoView: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* CONFIRMATION MODAL BEFORE PUBLISH */}
       {showConfirmModal && (
@@ -1403,39 +1826,65 @@ export const CrearComunicadoView: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-sm text-tiny font-bold uppercase bg-[#A6192E] text-white">
-                  {prioridad}
+                  {modoCreacion === 'rapido' ? prioridadRapida : prioridad}
                 </span>
-                <span className="text-xs text-[#64748B]">Emisión Oficial Grupo Terra</span>
+                <span className="text-xs text-[#64748B]">
+                  {modoCreacion === 'rapido' ? 'Emisión Rápida a Toda la Empresa' : 'Emisión Oficial Grupo Terra'}
+                </span>
               </div>
 
-              <h2 className="text-lg font-black text-[#202124]">{titulo || 'Título del Comunicado'}</h2>
+              <h2 className="text-lg font-black text-[#202124]">
+                {modoCreacion === 'rapido' ? (tituloRapido || 'Título del Comunicado Rápido') : (titulo || 'Título del Comunicado')}
+              </h2>
 
-              {imagenes.length > 0 && (
-                <img
-                  src={imagenes[0].url}
-                  alt="Portada"
-                  className="w-full h-64 object-cover rounded-sm border border-[#E4E2E1]"
-                />
+              {modoCreacion === 'rapido' ? (
+                imagenRapida && (
+                  <img
+                    src={imagenRapida.url}
+                    alt={imagenRapida.nombre}
+                    className="w-full h-64 object-cover rounded-sm border border-[#E4E2E1]"
+                  />
+                )
+              ) : (
+                imagenes.length > 0 && (
+                  <img
+                    src={imagenes[0].url}
+                    alt="Portada"
+                    className="w-full h-64 object-cover rounded-sm border border-[#E4E2E1]"
+                  />
+                )
               )}
 
               <div
                 className="text-xs text-[#202124] leading-relaxed border-t border-b border-[#E4E2E1] py-4"
-                dangerouslySetInnerHTML={{ __html: cuerpoHtml }}
+                dangerouslySetInnerHTML={{
+                  __html: modoCreacion === 'rapido'
+                    ? '<p>Estimado equipo de <strong>Grupo Terra</strong>,</p><p>Se comparte el afiche oficial y circular adjunta para conocimiento de toda la dotación de la empresa.</p>'
+                    : cuerpoHtml
+                }}
               />
 
-              {pdfs.length > 0 && (
+              {((modoCreacion === 'rapido' && pdfRapido) || (modoCreacion === 'completo' && pdfs.length > 0)) && (
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">
                     Documentos Oficiales Adjuntos:
                   </h4>
                   <div className="space-y-1.5">
-                    {pdfs.map(p => (
-                      <div key={p.id} className="p-2 border border-[#E4E2E1] rounded-sm flex items-center gap-2 text-xs">
+                    {modoCreacion === 'rapido' && pdfRapido ? (
+                      <div className="p-2 border border-[#E4E2E1] rounded-sm flex items-center gap-2 text-xs">
                         <FileText size={15} className="text-[#A6192E]" />
-                        <span className="font-semibold">{p.nombre}</span>
-                        <span className="text-[10px] text-[#64748B]">({p.tamano})</span>
+                        <span className="font-semibold">{pdfRapido.nombre}</span>
+                        <span className="text-[10px] text-[#64748B]">({pdfRapido.tamano} • {pdfRapido.paginas} páginas)</span>
                       </div>
-                    ))}
+                    ) : (
+                      pdfs.map(p => (
+                        <div key={p.id} className="p-2 border border-[#E4E2E1] rounded-sm flex items-center gap-2 text-xs">
+                          <FileText size={15} className="text-[#A6192E]" />
+                          <span className="font-semibold">{p.nombre}</span>
+                          <span className="text-[10px] text-[#64748B]">({p.tamano})</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

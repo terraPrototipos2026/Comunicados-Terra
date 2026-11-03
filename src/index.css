@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #A6192E;
+  --color-primary-hover: #871326;
+  --color-background: #FCF9F8;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F6F3F2;
+  --color-border: #E4E2E1;
+  --color-text-primary: #202124;
+  --color-text-secondary: #64748B;
+  --color-accent: #F28C00;
+  --color-success: #16A34A;
+  --color-danger: #DC2626;
+
+  /* Enterprise Micro Typography */
+  --text-micro: 0.5625rem;
+  --text-tiny: 0.625rem;
+  --text-small: 0.6875rem;
+}
+
+:root {
+  --primary: #A6192E;
+  --primary-hover: #871326;
+  --background: #FCF9F8;
+  --surface: #FFFFFF;
+  --surface-muted: #F6F3F2;
+  --border: #E4E2E1;
+  --text-primary: #202124;
+  --text-secondary: #64748B;
+  --accent: #F28C00;
+  --success: #16A34A;
+  --danger: #DC2626;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Custom scrollbars for enterprise tables and panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F6F3F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ==========================================================================
+   Configuración del Sistema: Escala de Fuentes y Accesibilidad
+   ========================================================================== */
+
+/* Escalas de Fuente Global */
+html.font-scale-pequena { font-size: 90% !important; }
+html.font-scale-normal { font-size: 100% !important; }
+html.font-scale-mediana { font-size: 115% !important; }
+html.font-scale-grande { font-size: 130% !important; }
+html.font-scale-extragrande { font-size: 145% !important; }
+
+/* Familias Tipográficas */
+html.font-inter body { font-family: 'Inter', system-ui, sans-serif !important; }
+html.font-atkinson body { font-family: 'Atkinson Hyperlegible', 'Segoe UI', Arial, sans-serif !important; letter-spacing: 0.02em; }
+html.font-roboto body { font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif !important; }
+html.font-mono body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
+
+/* Refuerzo de Peso Tipográfico */
+html.font-weight-boost body,
+html.font-weight-boost span,
+html.font-weight-boost p,
+html.font-weight-boost a {
+  font-weight: 550;
+}
+html.font-weight-boost .font-bold,
+html.font-weight-boost strong,
+html.font-weight-boost b {
+  font-weight: 800 !important;
+}
+
+/* Densidad de Interfaz y Componentes */
+html.density-compacta button,
+html.density-compacta input,
+html.density-compacta select {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  font-size: 0.8rem;
+}
+html.density-comoda button,
+html.density-comoda input,
+html.density-comoda select {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+  font-size: 0.95rem;
+}
+html.density-tactil button,
+html.density-tactil input,
+html.density-tactil select {
+  min-height: 48px !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  font-size: 1rem !important;
+}
+
+/* Tamaño de Iconos Global */
+html.icons-mediano svg {
+  transform: scale(1.15);
+}
+html.icons-grande svg {
+  transform: scale(1.3);
+}
+
+/* Bordes Acentuados */
+html.borders-accentuated .border,
+html.borders-accentuated [class*="border-"] {
+  border-width: 2px !important;
+}
+
+/* Resaltado de Elementos Interactivos */
+html.highlight-interactive button:focus-visible,
+html.highlight-interactive a:focus-visible,
+html.highlight-interactive input:focus-visible,
+html.highlight-interactive select:focus-visible {
+  outline: 3px solid #A6192E !important;
+  outline-offset: 3px !important;
+}
+html.highlight-interactive a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+}
+
+/* Reducción de Animaciones */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Alto Contraste */
+html.theme-alto_contraste {
+  filter: contrast(125%);
+}
+html.theme-alto_contraste body {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+html.theme-alto_contraste .border,
+html.theme-alto_contraste [class*="border-"] {
+  border-color: #000000 !important;
+}
+
+/* Modo Oscuro Corporativo Suave */
+html.theme-oscuro_suave body {
+  background-color: #0B1120 !important;
+  color: #F1F5F9 !important;
+}
+html.theme-oscuro_suave .bg-white {
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+}
+html.theme-oscuro_suave .bg-\[\#FCF9F8\] {
+  background-color: #0F172A !important;
+}
+html.theme-oscuro_suave .bg-\[\#F6F3F2\] {
+  background-color: #1E293B !important;
+}
+html.theme-oscuro_suave .text-\[\#202124\] {
+  color: #F8FAFC !important;
+}
+html.theme-oscuro_suave .text-\[\#64748B\] {
+  color: #94A3B8 !important;
+}
+html.theme-oscuro_suave .border-\[\#E4E2E1\] {
+  border-color: #334155 !important;
+}
